@@ -12,12 +12,12 @@ export default function Stack({ stack, stackKey }) {
     chatRef.current.scrollTo(0, chatRef.current.scrollHeight);
   }, [messages]);
 
-  const onSubmit = (prompt) => {
+  const onSubmit = async (prompt) => {
     if (prompt.trim().length === 0) {
       return;
     }
 
-    setMessages((messages, i) => {
+    setMessages((messages) => {
       return [
         ...messages,
         {
@@ -28,6 +28,32 @@ export default function Stack({ stack, stackKey }) {
         }
       ]
     });
+
+    const response = await fetch("/api/completion", {
+      method: "POST",
+      body: JSON.stringify({ prompt }),
+      headers: {
+        "Content-type": "application/json"
+      }
+    });
+
+    const json = await response.json();
+
+    if (response.ok) {
+      setMessages((messages) => {
+        return [
+          ...messages,
+          {
+            id: new Date().toISOString(),
+            author: "ai",
+            avatar: "/logo-open-ai.png",
+            text: json.result
+          }
+        ]
+      });
+    } else {
+      console.error(json?.error?.message);
+    }
   }
 
   return (
