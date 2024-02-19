@@ -1,5 +1,8 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { darcula } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 export default function Message({ avatar, text: initialText, idx, author }) {
   const [text, setText] = useState(author === "ai" ? "" : initialText);
@@ -33,11 +36,33 @@ export default function Message({ avatar, text: initialText, idx, author }) {
       <div
         className="w-full"
       >
-        <div
+        <ReactMarkdown
           className={blinkingCursorClass}
+          components={{
+            code({inline, className, children, style, ...props}) {
+              const match = /language-(\w+)/.exec(className || "");
+              return !inline && match ? (
+                <SyntaxHighlighter
+                  style={darcula}
+                  language={match[1]}
+                  PreTag="div"
+                  {...props}
+                >
+                  {children}
+                </SyntaxHighlighter>
+              ) : (
+                <code
+                  className={className}
+                  {...props}
+                >
+                  {children}
+                </code>
+              )
+            }
+          }}
         >
           {text}
-        </div>
+        </ReactMarkdown>
       </div>
     </div>
   );

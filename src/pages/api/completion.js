@@ -8,7 +8,7 @@ export default async function completion(req, res) {
     const AI_PROMPT = "The following is a conversation with Walt. Walt is helpful and creative. Walt`s only knowledge is React JS library. He can only answer questions related to React JS. He only cares about React JS. Walt provides often code examples. Walt provides answers formated in markdown format.";
     const AI_RESPONSE = "``` import React from 'react'; const Button = () => { return <button>Click Me!</button>; } export default Button; ```";
 
-    return res.status(200).json({ result: AI_RESPONSE});
+    // return res.status(200).json({ result: AI_RESPONSE});
 
     const configuration = new Configuration({
       apiKey: process.env.OPENAI_API_KEY
