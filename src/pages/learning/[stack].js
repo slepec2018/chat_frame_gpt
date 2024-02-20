@@ -3,10 +3,36 @@ import stacks from "../../data/stacks.json";
 import Header from "@/components/Header";
 import Message from "@/components/Message";
 import Prompt from "@/components/Prompt";
+import useUser from "@/hooks/useUser";
+
+const SESSION_KEYS = [
+  "u1-2023-04-13T15:36:20.424Z",
+  "u2-2023-04-13T15:36:20.123Z",
+  "u3-2023-04-13T15:36:20.421Z",
+  "u4-2023-04-13T15:36:20.999Z"
+];
 
 export default function Stack({ stack, stackKey }) {
   const [messages, setMessages] = useState([]);
+  const [activeSession, setActiveSession] = useState("");
+  const { user } = useUser();
   const chatRef = useRef(null);
+
+  useEffect(() => {
+    const cleanChatHistory = async () => {
+      await fetch("/api/completion", {
+        method: "DELETE"
+      });
+    }
+
+    cleanChatHistory();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      setActiveSession(user.uid);
+    }
+  }, [user]);
 
   useEffect(() => {
     chatRef.current.scrollTo(0, chatRef.current.scrollHeight);
@@ -29,7 +55,7 @@ export default function Stack({ stack, stackKey }) {
       ]
     });
 
-    const response = await fetch("/api/completion", {
+    const response = await fetch(`/api/completion?stack=${stackKey}`, {
       method: "POST",
       body: JSON.stringify({ prompt }),
       headers: {
@@ -56,6 +82,20 @@ export default function Stack({ stack, stackKey }) {
     }
   }
 
+  const handleSessionChange = async (e) => {
+    const session = e.target.value;
+
+    if (!session) {
+      console.log("Not valid session!");
+      return;
+    }
+
+    await fetch(`/api/completion?uid=${session}`, {
+      method: "PUT"
+    });
+    setActiveSession(session);
+  }
+
   return (
     <div
       className="h-full flex flex-col"
@@ -64,6 +104,36 @@ export default function Stack({ stack, stackKey }) {
         logo={stack.logo}
         info={stack.info}
       />
+      <div
+        className="mt-4"
+      >
+        Active ses: {activeSession}
+      </div>
+      <div
+        className="mt-4"
+      >
+        Uid: {user?.uid}
+      </div>
+      <select
+        onChange={handleSessionChange}
+        value={activeSession}
+        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-[200px] p-2.5 mt-5"
+      >
+        <option
+          value={""}
+          disabled={activeSession !== ""}
+        >
+          Choose session
+        </option>
+        {SESSION_KEYS.map((sk) => (
+          <option
+            key={sk}
+            value={sk}
+          >
+            {sk}
+          </option>
+        ))}
+      </select>
       <hr
         className="my-4"
       />
@@ -71,6 +141,13 @@ export default function Stack({ stack, stackKey }) {
         ref={chatRef}
         className="chat flex flex-col h-full overflow-y-scroll"
       >
+        {messages.length === 0 && (
+          <div
+            className="bg-yellow-200 p-4 rounded-2xl"
+          >
+            No messages yet. Ask me something.
+          </div>
+        )}
         {messages.map((message, i) => (
           <Message
             key={message.id}
